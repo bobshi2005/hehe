@@ -1,0 +1,35 @@
+1. dump data
+
+python manage.py dumpdata  > data.json
+
+2. remove these two tables(auth_permission, django_content_type) before loaddata
+loaddata
+
+python manage.py loaddata  > data.json
+
+
+3. change apache\conf\httpd.conf
+
+LoadModule wsgi_module modules/mod_wsgi.so
+
+
+Alias /static "C:/Python27/Lib/site-packages/django_xadmin-0.4.4-py2.7.egg/xadmin/static"
+
+<Directory "C:/Python27/Lib/site-packages/django_xadmin-0.4.4-py2.7.egg/xadmin/static">
+Allow from all
+Order deny,allow
+</Directory>
+
+WSGIScriptAlias / "D:/Django/hehe/hehe/wsgi.py"
+WSGIPythonPath "D:/Django/hehe"
+
+
+<Directory "D:/Django/hehe/hehe">
+<Files wsgi.py>
+Allow from all
+Order deny,allow
+</Files>
+</Directory>
+
+
+password: hehe~12
