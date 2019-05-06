@@ -44,7 +44,9 @@ class Project(models.Model):
     end_date = models.DateField(u'竣工日期', blank=True,null=True)
     settlement_method = models.CharField(u'结算方式',max_length=50, blank=True,null=True)
     settlement_amount = models.DecimalField(u'结算金额',max_digits = 15, decimal_places=2, blank=True, null=True)
-    file = models.FileField(u'附件', upload_to='.', help_text='竣工报告', blank=True)
+    file = models.FileField(u'竣工报告', upload_to='.', help_text='竣工报告', blank=True)
+    settlement_status = models.BooleanField(u'结算状态', default=False)
+    settlement_file = models.FileField(u'结算附件', upload_to='.', help_text='结算附件', blank=True)
     
     one_month_amount = models.DecimalField(u'1月费用',max_digits = 15, decimal_places=2, blank=True, null=True)
     two_month_amount = models.DecimalField(u'2月费用',max_digits = 15, decimal_places=2, blank=True, null=True)

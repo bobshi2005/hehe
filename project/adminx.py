@@ -155,12 +155,12 @@ class ProjectAdmin(object):
     
     show_bookmarks = False
     use_related_menu = False
-    list_display = ('name', 'full_name','estimate_user', 'users', 'amount', 'bid_date', 'company', 'getProjectMaterials', 'one_month_amount', 'two_month_amount')
+    list_display = ('name', 'full_name','estimate_user', 'users', 'amount', 'bid_date', 'company', 'getProjectMaterials')
     list_display_links = ('name',)
     aggregate_fields = {"amount": "sum",}
     
     search_fields = ['name']
-    list_filter = ['company__name', 'bid_date']
+    list_filter = ['company__name', 'bid_date', 'settlement_status']
 
     actions = [BatchChangeAction, ]
     batch_fields = ('name',) 
@@ -338,7 +338,22 @@ class SelectedLineItemAdmin(object):
         self.new_obj.user = self.user
         return super(SelectedLineItemAdmin, self).save_models()
 
+    
+from data_importer.views import DataImporterForm
+from data_importer.importers import XLSXImporter
+class ProjectMaterialImporterModel(XLSXImporter):
+    fields = ['seq', 'category', 'name', 'specification', 'unit', 'quantity', 'price', 'total']
+    class Meta:
+#         model = Material
+        ignore_first_line = True
+
+class DataImporterCreateView(DataImporterForm):
+        extra_context = {'title': 'Create Form Data Importer',
+                         'template_file': 'myfile.csv',
+                         'success_message': "File uploaded successfully"}
+        importer = ProjectMaterialImporterModel
         
+                
 xadmin.site.register(Company, CompanyAdmin)  
 xadmin.site.register(Project, ProjectAdmin)  
 xadmin.site.register(ProjectMaterial, ProjectMaterialAdmin)
@@ -353,5 +368,6 @@ xadmin.site.register_view(r"^report/project/used/export$", ProjectUsedExportExce
 xadmin.site.register_view(r"^report/payment/summary/$", PaymentSummaryView, name='report/payment/summary')        
 xadmin.site.register_view(r"^report/payment/summary/export$", PaymentSummaryExportExcelView, name='report/payment/summary/export')        
 xadmin.site.register_view(r"^material/price/$", MaterialPriceView, name='material/price')        
+xadmin.site.register_view(r"^project/material/import/$", DataImporterCreateView, name='project/material/import')        
 # xadmin.site.register_view(r"^$", IndexView, name='index')        
 

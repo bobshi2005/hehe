@@ -12,7 +12,7 @@ from models import Document, DocumentLineItem
 from document.models import Document, DocumentLineItem, PROJECT_TYPE
 from workflow.models import Route, Item, ITEM_START, ITEM_APPROVED, ITEM_REJECTED
 from workflow.workflow import Workflow
-from hehe.util import get_audit_comments_by_document_id, has_audit_comment_by_document_id, doAudit, handle_audit, handle_audit, getItem, canSubmitToApproveForDocument, isGroup,PROJECT_GROUP, PURCHASE_GROUP, canEditAuditQty, canDeleteOrAddDocumentLine, is_closed, isClosedByDocument, getProjects, getPurchasedQuantity, isPurchCompleted
+from hehe.util import document_apply_submit_check, get_audit_comments_by_document_id, has_audit_comment_by_document_id, doAudit, handle_audit, handle_audit, getItem, canSubmitToApproveForDocument, isGroup,PROJECT_GROUP, PURCHASE_GROUP, canEditAuditQty, canDeleteOrAddDocumentLine, is_closed, isClosedByDocument, getProjects, getPurchasedQuantity, isPurchCompleted
 from hehe.actions import PROJECT_MATERIAL_APPLY, PurchaseOrderSelectedAction
 from django.utils.datastructures import SortedDict
 from order.models import OrderLine
@@ -26,6 +26,7 @@ from document.models import PAYMENT_TYPE
 from payment.models import Payment
 from material.models import Category
 from hehe.constant import APPROVAL_FORM_HTML
+import document
 
 class DocumentAdmin(object):
     
@@ -58,24 +59,30 @@ class DocumentAdmin(object):
             return super(DocumentAdmin, self).post_response(self, *args, **kwargs)
         
     
+    
+
     def post(self, request, *args, **kwargs):
         document_id = request.POST.get('_submit')
         if document_id:
-            route = Route.objects.filter(route_name = PROJECT_MATERIAL_APPLY)[0]
-            document = Document.objects.filter(document_id = document_id)[0]
-            document.create_date = datetime.datetime.now()
-            document.save(update_fields=['create_date'])
-            item = Item.objects.get_or_create(document = document,
-                                       item_name = PROJECT_MATERIAL_APPLY,
-                                       route = route,
-                                       user = self.user)
-            #重新发起申请
-            if item[0].status == ITEM_REJECTED:
-                workflow = Workflow()
-                workflow.reApplyWorkflow(item[0], self.user, '')
-            else:#新申请
-                workflow = Workflow()      
-                workflow.applyWorkflow(route, item[0], self.user)
+            if (document_apply_submit_check(self, document_id)):
+                route = Route.objects.filter(route_name = PROJECT_MATERIAL_APPLY)[0]
+                document = Document.objects.filter(document_id = document_id)[0]
+                document.create_date = datetime.datetime.now()
+                document.save(update_fields=['create_date'])
+                item = Item.objects.get_or_create(document = document,
+                                           item_name = PROJECT_MATERIAL_APPLY,
+                                           route = route,
+                                           user = self.user)
+                #重新发起申请
+                if item[0].status == ITEM_REJECTED:
+                    workflow = Workflow()
+                    workflow.reApplyWorkflow(item[0], self.user, '')
+                else:#新申请
+                    workflow = Workflow()      
+                    workflow.applyWorkflow(route, item[0], self.user)
+                
+            else:
+                self.message_user("材料申请数量必填！请重新填写完再提交。", 'error')
             
         return super(DocumentAdmin, self).post(request, *args, **kwargs)
             

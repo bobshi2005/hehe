@@ -263,12 +263,30 @@ class MyHandleTasks(CommAdminView):
 #已处理的工作    
 class MyHandledTasks(MyTask):
     
-    
-    
-    list_display = ('getProjectName', 'getDocumentLines', 'user', 'route', 'status', 'getAuditList', 'getAuditCommentsLable')
+    list_display = ('getProjectName', 'getDocumentLines', 'user', 'route', 'status', 'getAuditList', 'getAuditCommentsLable', 'getVendorName', 'getAppliedAmount')
     list_display_links = ('none',)
     list_filter = ['route', 'document__project', 'document__create_date'] 
     search_fields = ['document__document_id', 'document__project__name', 'document__user__first_name', 'document__user__last_name']
+    
+    def getVendorName(self, instance):
+        vendor_name = ''
+        query_set = Payment.objects.filter(payment_id = instance.document.document_id)
+        if query_set.exists(): 
+            vendor_name = query_set[0].vendor.name
+        return (vendor_name)
+    getVendorName.short_description = u"供应商名称"
+    getVendorName.allow_tags = True
+    getVendorName.is_column = True
+    
+    def getAppliedAmount(self, instance):
+        applied_amount = ''
+        query_set = Payment.objects.filter(payment_id = instance.document.document_id)
+        if query_set.exists(): 
+            applied_amount = query_set[0].applied_amount
+        return (applied_amount)
+    getAppliedAmount.short_description = u"审批金额"
+    getAppliedAmount.allow_tags = True
+    getAppliedAmount.is_column = True
     
     def get_list_display(self):
         list_display = super(MyHandledTasks, self).get_list_display()

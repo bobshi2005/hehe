@@ -6,7 +6,7 @@ from xadmin.views.list import ResultRow
 from models import Order, OrderLine, ReceivingLine, CheckAccount,Invoice, CheckAccountDetail
 from export import ExportExcelView
 from hehe.util import is_Receivied, close_order, is_closed_by_order_id, is_closed, is_closed_by_order_line_id, isGroup, ACCOUNT_GROUP_MANAGER, ACCOUNT_GROUP
-from hehe.actions import OrderLineSelectedAction
+from hehe.actions import OrderLineSelectedAction, BatchVendorAccount
 from django.http import  HttpResponseRedirect
 from django.db.models import Sum
 from order_util import update_document_purch_status
@@ -77,7 +77,7 @@ class OrderAdmin(object):
             
         return super(OrderAdmin, self).get(request, *args, **kwargs)
     
-    #已闭合的order不能被删除
+    #已闭合的order不能被删除 
     def filter_queryset(self, queryset):
         queryset = queryset.exclude(is_closed = True)
         return queryset
@@ -200,7 +200,7 @@ class OrderLineAdmin(object):
     list_display = ['getOrderId', 'getProjectName', 'getProjectMaterial',  'brand', 'getQuantity', 'getExpectedQuantity', 'getAuditQuantity', 'getTotalPurchasedQuantity', 'expected_date','purchase_quantity','getPostedQuantity', 'price', 'total',  'getComments']
     list_display_links = ('documentLineItem',)
     aggregate_fields = {"total": "sum",}
-    batch_fields = ('expected_date', 'brand') 
+    batch_fields = ('expected_date', 'brand', 'price') 
     search_fields = ['order__order_id', 'order__project__name', 'order__vendor__name']
     list_filter = ['order__project__name', 'order__vendor__name', 'documentLineItem__projectMaterial__material__name']
 #     list_editable = ['brand','expected_date','purchase_quantity','price']
@@ -213,6 +213,13 @@ class ReceivingLineAdmin(object):
         item = super(ReceivingLineAdmin, self).result_item(obj, field_name, row)
         if (field_name == 'receiving_quantity' or field_name == 'receiving_date' or field_name == 'comments') and obj.orderLine.order.is_closed:
             item.btns = []
+        
+        #已对账的不可以修改    
+        if (field_name == 'receiving_quantity' or field_name == 'receiving_date' or field_name == 'comments') and obj.checkAccount:
+            item.btns = []
+            
+        if (field_name == 'getOrderId') and (obj.checkAccount or obj.orderLine.order.is_closed):
+            item.wraps = []
         return item
     
     #已闭合的order不能加修改 link  
@@ -241,9 +248,9 @@ class ReceivingLineAdmin(object):
             
         return context
     
-    #已闭合的order不能被删除
+    #已闭合的order不能被删除 已对账的也不能删除
     def filter_queryset(self, queryset):
-        queryset = queryset.exclude(orderLine__order__is_closed = True)
+        queryset = queryset.exclude(orderLine__order__is_closed = True).exclude(checkAccount__isnull=False)
         return queryset
         
     def delete_models(self, queryset):
@@ -326,7 +333,7 @@ class CheckAccountAdmin(object):
     list_display_links = ('none',)
     search_fields = ['check_account_id',]
     list_filter = ['create_time', 'vendor__name']
-    actions = [DeleteSelectedAction,]
+    actions = [BatchVendorAccount, DeleteSelectedAction,]
     
 class InvoiceAdmin(object):
     

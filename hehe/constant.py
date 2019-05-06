@@ -2,6 +2,7 @@
 
 MAX_PROJECT_MATERIAL_QANTITY = 99999 
 
+PAYMENT_APPLY = u"付款申请"
 
 #用于 项目材料审批 
 APPROVAL_FORM_HTML = """

@@ -445,12 +445,25 @@ def exportCheckAccountExcel(checkAccount, receivingLines):
     file_type = 'xls'
     file_name = 'vendor'
     response = HttpResponse(mimetype="%s; charset=UTF-8" % 'application/vnd.ms-excel')
-    response['Content-Disposition'] = ('attachment; filename=%s.%s' % (file_name, file_type)).encode('utf-8') 
+    response['Content-Disposition'] = ('attachment; filename=%s.%s' % (file_name, file_type)).encode('utf-8')
     response.write(get_check_account_xls_export(checkAccount, receivingLines))
     return response
 
 def get_check_account_xls_export(checkAccount, receivingLines):
+    book = xlwt.Workbook(encoding='utf-8')
+    sheetName = checkAccount.vendor.name
+    sheet = book.add_sheet(sheetName)
+    get_check_account_xls_export_impl(checkAccount, receivingLines, book, sheet)
+    return output_book(book)
+
+def output_book(book):
     output = StringIO.StringIO()
+    book.save(output)
+    output.seek(0)
+    return output.getvalue()
+    
+
+def get_check_account_xls_export_impl(checkAccount, receivingLines, book, sheet):
     result = {}
     details = combine_lines(receivingLines)
     result['receiving_list'] = details['lines']
@@ -489,11 +502,9 @@ def get_check_account_xls_export(checkAccount, receivingLines):
     result['last_term_owed_invoices'] = total_amount['last_term_owed_invoices']
     result['total_owed_invoices'] = total_amount['total_owed_invoices']
     
-    book = generate_account_details(result) 
+    book = generate_account_details(result, book, sheet) 
     
-    book.save(output)
-    output.seek(0)
-    return output.getvalue()        
+            
             
 def write_receiving_list(sheet, result, rowx, has_brand_name):
     
@@ -723,9 +734,7 @@ def has_brand_name(result):
         
         
         
-def generate_account_details(result):
-    book = xlwt.Workbook(encoding='utf-8')
-    sheet = book.add_sheet("account_detail")
+def generate_account_details(result, book, sheet):
     hasBrandName = has_brand_name(result)
     max_column = 9
     if hasBrandName:

@@ -2,6 +2,7 @@
 from django.db import models
 from mptt.models import MPTTModel, TreeForeignKey
 from django.core.exceptions import ValidationError
+from data_importer.importers import XLSXImporter
 
 class Category(models.Model):
     name = models.CharField(u'类别名称',max_length=50)
@@ -12,6 +13,15 @@ class Category(models.Model):
     class Meta:
         verbose_name = u'类别'
         verbose_name_plural = verbose_name
+    def clean(self):
+        if self.id is None:
+            try:
+                m = Category.objects.filter(name = self.name)[0]
+            except IndexError:
+                m = None  
+            
+            if m is not None:
+                raise ValidationError('该类别名称已存在，请增加其他类别！')
 
 class Specification(models.Model):
     name = models.CharField(u'规格名称',max_length=250)
@@ -22,6 +32,16 @@ class Specification(models.Model):
     class Meta:
         verbose_name = u'规格'
         verbose_name_plural = verbose_name 
+        
+    def clean(self):
+        if self.id is None:
+            try:
+                m = Specification.objects.filter(name = self.name)[0]
+            except IndexError:
+                m = None  
+            
+            if m is not None:
+                raise ValidationError('该规格名称已存在，请增加其他规格！')
 
 class Unit(models.Model):
     name = models.CharField(u'单位名称',max_length=20)
@@ -31,7 +51,17 @@ class Unit(models.Model):
  
     class Meta:
         verbose_name = u'单位'
-        verbose_name_plural = verbose_name          
+        verbose_name_plural = verbose_name 
+        
+    def clean(self):
+        if self.id is None:
+            try:
+                m = Unit.objects.filter(name = self.name)[0]
+            except IndexError:
+                m = None  
+            
+            if m is not None:
+                raise ValidationError('该单位名称已存在，请增加其他单位！')         
 
 class Material(models.Model):
     name = models.CharField(u'材料名称',max_length=50)
@@ -41,14 +71,14 @@ class Material(models.Model):
     specification = models.CharField(u'规格',max_length=250 ,blank=True,null=True)
     unit = models.ForeignKey(Unit,verbose_name=u'单位',blank=True,null=True)
     
-#     def clean(self):
-#         try:
-#             m = Material.objects.filter(name = self.name, category = self.category, specification = self.specification, unit = self.unit)[0]
-#         except IndexError:
-#             m = None  
-#         
-#         if m is not None:
-#             raise ValidationError('材料名称已存在，请增加其他材料名称！')
+    def clean(self):
+        try:
+            m = Material.objects.filter(name = self.name, category = self.category, specification = self.specification, unit = self.unit)[0]
+        except IndexError:
+            m = None  
+         
+        if m is not None:
+            raise ValidationError('材料名称已存在，请增加其他材料名称！')
         
     def getName(self):
         full_name = self.name
@@ -69,6 +99,10 @@ class Material(models.Model):
         verbose_name = u'材料'
         verbose_name_plural = verbose_name
 
+
+    
+
+
 class Brand(models.Model):
     name = models.CharField(u'名称',max_length=50)
     def __unicode__(self):
@@ -76,6 +110,16 @@ class Brand(models.Model):
     class Meta:
         verbose_name = u'品牌'
         verbose_name_plural = verbose_name
+        
+    def clean(self):
+        if self.id is None:
+            try:
+                m = Brand.objects.filter(name = self.name)[0]
+            except IndexError:
+                m = None  
+            
+            if m is not None:
+                raise ValidationError('该品牌名称已存在，请增加其他品牌！')
 
 class Vendor(MPTTModel):
     class Meta:

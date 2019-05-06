@@ -465,7 +465,18 @@ def buildProjectItems(items):
         lines.append(line)
     return lines
 
-
+def document_apply_submit_check(self, document_id):
+        result = True
+        document = Document.objects.filter(document_id = document_id)[0]
+        documentLines = DocumentLineItem.objects.filter(document=document)
+        for documentLine in documentLines:
+            if documentLine.expected_quantity is None or documentLine.expected_quantity == 0:
+                result = False
+                break 
+                
+        
+        return result
+    
 import json    
 def GetMaterial(request):
     if request.method == 'GET' and request.is_ajax():

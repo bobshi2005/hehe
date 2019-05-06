@@ -8,11 +8,13 @@ from workflow.workflow import Workflow
 from order.models import Order, OrderLine, ReceivingLine
 from hehe.util import getAvailableQuantity, getTotalReceivedQuantity, isGroup, PROJECT_GROUP, assign_material_to_project
 from project.models import SelectedLineItem, ProjectMaterial, Project
-from hehe.constant import MAX_PROJECT_MATERIAL_QANTITY
+from hehe.constant import MAX_PROJECT_MATERIAL_QANTITY, PAYMENT_APPLY
 import datetime 
+from payment.payment_util import submitPayment
+from report.batch_vendor_account import batchExportVendorAccount
 
 PROJECT_MATERIAL_APPLY = u"项目材料申请"
-PAYMENT_APPLY = u"付款申请"
+
 
 #把材料分配到项目里面
 class MaterialSelectedAction(BaseActionView):
@@ -199,3 +201,35 @@ class AuditSelectedAction(BaseActionView):
     def do_action(self):    
         return HttpResponseRedirect("/workflow/audit/items")           
 
+class BatchPaymentSubmit(BaseActionView):
+
+    action_name = "audit_selected"
+    description = u'提交申请付款'
+
+    model_perm = 'view'
+    icon = 'fa fa-check-square-o'
+    
+    @filter_hook
+    def do_action(self, queryset):
+        
+        for obj in queryset:
+            submitPayment(self, obj.payment_id)
+         
+        self.message_user(u"提交申请成功", 'success') 
+         
+        url = "/payment/payment/"
+        return HttpResponseRedirect(url)  
+
+#批量导出 对账单   
+class BatchVendorAccount(BaseActionView):
+
+    action_name = "audit_selected"
+    description = u'导出对账单'
+
+    model_perm = 'view'
+    icon = 'fa fa-check-square-o'
+    
+    @filter_hook
+    def do_action(self, queryset):
+        
+        return batchExportVendorAccount(self, queryset)

@@ -323,3 +323,5 @@ ALTER TABLE  document_documentlineitem MODIFY COLUMN posted_quantity decimal(15,
 ALTER TABLE  document_documentlineitem MODIFY COLUMN audit_quantity decimal(15,2) ;
 ALTER TABLE  order_orderline MODIFY COLUMN purchase_quantity decimal(15,2) ;
 
+ALTER TABLE `project_project`  ADD COLUMN `settlement_status` tinyint(1) NOT NULL;
+ALTER TABLE `project_project`  ADD COLUMN `settlement_file` varchar(100);
