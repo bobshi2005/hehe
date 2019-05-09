@@ -122,6 +122,11 @@ MIDDLEWARE_CLASSES = (
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
+FILE_UPLOAD_HANDLERS = [
+    'django.core.files.uploadhandler.TemporaryFileUploadHandler',
+]
+
+    
 AUTH_USER_MODEL = "user.UserInfo" 
 
 ROOT_URLCONF = 'hehe.urls'

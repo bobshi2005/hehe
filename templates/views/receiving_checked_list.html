@@ -1,0 +1,136 @@
+{% extends 'xadmin/base_site.html' %}
+
+
+
+{% block content-nav %}
+      <div class="navbar content-navbar navbar-default navbar-xs" data-toggle="breakpoint"
+        data-class-xs="navbar content-navbar navbar-inverse navbar-xs"
+        data-class-sm="navbar content-navbar navbar-default navbar-xs">
+        
+        <div class="navbar-header">
+          <a class="navbar-brand" data-toggle="collapse" data-target="#top-nav .navbar-collapse">
+            	选择年月:
+          </a>
+        </div>
+        
+        <form class="navbar-form exform" action="" method="post">
+        {% csrf_token %}
+        <div class="navbar-header ">
+		  <select id="id_year" class="form-control" name="year" style="width:100px">
+            {% for var_year in years %}
+             {% if var_year ==  year %}   
+			 <option value={{ var_year }} selected="selected"> {{ var_year }}</option>
+			 {% else %}
+			 <option value={{ var_year }} > {{ var_year }}</option>
+			 {% endif %}
+			{% endfor %} 
+		   </select>
+          </div>
+          <div class="navbar-header">
+          	&nbsp;&nbsp;
+	      </div>
+	      <div class="navbar-header ">
+		  <select id="id_month" class="form-control" name="month" style="width:80px">
+            {% for var_month in months %}
+             {% if var_month ==  month %}   
+			 <option value={{ var_month }} selected="selected"> {{ var_month }}月</option>
+			 {% else %}
+			 <option value={{ var_month }} > {{ var_month }}月</option>
+			 {% endif %}
+			{% endfor %} 
+		   </select>
+          </div>
+          <div class="navbar-header">
+          	&nbsp;&nbsp;
+	      </div>
+	       <div class="navbar-header">
+          	&nbsp;&nbsp;
+	      </div>
+	      <div class="navbar-header">
+          	<button type="submit" class="btn btn-success">查询</button>
+	      </div>
+	      </form>
+	      
+	      <div class="navbar-header">
+          	&nbsp;&nbsp;
+	      </div>
+	      
+	      <form class="navbar-form exform" action="export_all" method="post">
+	         {% csrf_token %}
+	         <input type="hidden"  id="exportYear" name="year" value='{{ year }}'/>
+	        <div class="navbar-header">
+	          	<button type="submit" class="btn btn-success">导出总表</button>
+		    </div>
+	    </form>
+	    
+        
+    </div>
+ {% endblock %}
+      
+
+{% block content %}
+
+{% if projects %}
+<form id="changelist-form" action="" method="post">
+{% csrf_token %}
+<div class="results table-responsive"> 
+  <table class="table table-bordered table-striped table-hover">  
+    <thead>
+      <tr>
+        <th scope="col" class="action-checkbox-column">
+            <input type="checkbox" id="action-toggle" />
+        </th>
+        <th scope="col">序号</th>
+        <th scope="col">项目</th>
+      </tr>
+    </thead>
+    <tbody>
+    	{% for line in projects %}
+	      <tr class="grid-item">
+	      	<td  class="action-checkbox">
+                <input class="action-select" name="_selected_action" type="checkbox" value={{line.id  }} />
+            </td>
+	        <td>{{ line.index }} </td>
+	        <td>{{ line.name }} </td>
+	      </tr>
+	     {% endfor %} 
+	     
+    </tbody>
+  </table>
+ </div>
+ 
+ <div class="form-actions well well-sm">
+     <input type="hidden"  name="year" value='{{ year }}'/>
+	 <input type="hidden"  name="month" value='{{ month }}'/>
+     <input type="hidden" id="action" name="action" value="exportCheckedProject"/>
+
+  <div class="btn-group clearfix dropup">
+    <a class="dropdown-toggle btn btn-success" data-toggle="dropdown" href="#">
+    <i class="fa fa-wrench"></i> 
+    <span class="action-counter">{{ projects | length }} 个中 0 个被选</span>
+    <span class="all" style="display: none;">选中了 {{ projects | length }} 个</span>
+    <span class="caret"></span></a>
+    <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
+      <li><a onclick="$.do_action('export');"><i class="fa fa-check-square-o"></i> 导出</a></li>
+      
+    </ul>
+  </div>
+      
+  </div>
+  
+ {% endif %}
+ 
+{% endblock content %}
+ 
+{% block extrabody %}
+<script type="text/javascript">var _actions_icnt="{{ projects | length }}";</script>
+<script type="text/javascript">
+
+$('#id_year').on('change', function() {
+	  $("#exportYear").val(this.value);
+});
+	
+
+</script>
+
+{% endblock %}

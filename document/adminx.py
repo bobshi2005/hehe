@@ -458,10 +458,7 @@ class RequestOrder(MyListAdminView):
         return list_display
      
     def queryset(self):
-        items = Item.objects.filter(document__document_id__startswith = 'PM', status = ITEM_APPROVED)
-        document_ids= []
-        for item in items:
-            document_ids.append(item.document.id)
+        document_ids = Item.objects.filter(document__document_id__startswith = 'PM', status = ITEM_APPROVED).values_list('document', flat=True)
         return super(RequestOrder, self).queryset().filter(id__in = document_ids).order_by('purch_status', '-document_id')  
     
       

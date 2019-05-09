@@ -55,6 +55,7 @@ def combine_lines(receivingLines):
         line['company'] = receivingLine.orderLine.documentLineItem.projectMaterial.project.company.name
         line['vendor'] = receivingLine.orderLine.order.vendor.short_name if receivingLine.orderLine.order.vendor.short_name else receivingLine.orderLine.order.vendor.name
         line['price'] = receivingLine.orderLine.price
+        line['checked_month'] =  int(receivingLine.checkAccount.start_date.strftime("%m"))  if receivingLine.checkAccount.start_date else ''
         line['isCheckedAccount'] = bool(receivingLine.checkAccount)
         price = (receivingLine.orderLine.price or 0)
         quantity = (receivingLine.receiving_quantity or 0)

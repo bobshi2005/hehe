@@ -104,10 +104,9 @@ def write_receiving_list(sheet, result, rowx):
     
     write_details(sheet, rowx, detail_head, data, heading_xf, data_xfs) 
     
-def generate_project_receiving_list(result):
+def generate_project_receiving_list(result, book, sheet):
     column = 10
-    book = xlwt.Workbook(encoding='utf-8')
-    sheet = book.add_sheet("receiving_detail")
+    
     report_title = u'到货单'
     report_title_xf = ezxf('font: bold on, height 400; align: wrap on, vert centre, horiz center') 
     sheet.write_merge(0, 2, 0, column, report_title, report_title_xf)

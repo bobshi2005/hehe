@@ -7,7 +7,7 @@ from document.models import Document, DocumentLineItem
 from workflow.models import Item, TaskHistory, ITEM_REJECTED, ITEM_APPROVED,APPROVED, ITEM_STATUS
 from workflow.workflow import getPayment
 from order.models import Order, OrderLine, ReceivingLine, CheckAccount, Invoice
-from material.models import Vendor, Material
+from material.models import Vendor, Material, Category, Unit
 from project.models import Company, Project, ProjectMaterial
 from payment.models import Payment
 from setting.models import VendorSetting
@@ -140,7 +140,7 @@ def is_Receivied(order_id):
             break;
     return result
             
-    
+
             
 
 def is_closed(order_id):
@@ -490,4 +490,72 @@ def GetMaterial(request):
         
         serialized_results = serialize_results(queryset)
         results_json = json.dumps(serialized_results)
-        return HttpResponse(results_json, content_type='application/json')            
+        return HttpResponse(results_json, content_type='application/json')
+    
+                
+def uploadProjectMaterial(project, row):
+    print row['seq']
+    print row['category']
+    print row['name']
+    print row['specification']
+    print row['unit']
+    
+    
+    print row['quantity']
+    print row['price']
+    print row['total']
+    
+    try:
+        
+        m = Material.objects.filter(name = row['name'], category__name = row['category'], specification = row['specification'], unit__name = row['unit'])[0]
+    except IndexError:
+        m = None  
+    
+    projectMaterial = ProjectMaterial()
+    projectMaterial.project = project
+    
+    if row['quantity']:
+        projectMaterial.quantity = row['quantity']
+        
+    if row['price']:
+        projectMaterial.price = row['price']
+        
+    if row['total']:
+        projectMaterial.total = row['total']
+        
+    if m is not None:
+        projectMaterial.material = m
+    else:
+        m = Material()
+        if row['name']:
+            m.name = row['name']
+            
+        if row['specification']:
+            m.specification = row['specification']
+            
+        if row['category']:
+            try:
+                category = Category.objects.filter(name = row['category'])[0]
+            except IndexError:
+                category = Category() 
+                category.name = row['category']
+                category.save()
+                
+            m.category = category   
+                     
+        if row['unit']:
+            try:
+                unit = Unit.objects.filter(name = row['unit'])[0]
+            except IndexError:
+                unit = Unit() 
+                unit.name = row['unit']
+                unit.save()
+            
+            m.unit = unit
+        
+        m.save()
+        
+        projectMaterial.material = m
+        
+        
+    projectMaterial.save()            

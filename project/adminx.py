@@ -10,7 +10,7 @@ from django.contrib.auth.models import Group, Permission
 from xplugin.user.models import UserInfo
 from xadmin.plugins.actions import DeleteSelectedAction
 from hehe.actions import ApplyProjectMaterialSelectedAction, ProjectMaterialSelectedAction
-from hehe.util import isGroup,getProjects, getMateriales, PROJECT_GROUP, PURCHASE_GROUP, ESTIMATE_GROUP_MANAGER, ESTIMATE_GROUP, get_received_quantity
+from hehe.util import uploadProjectMaterial, isGroup,getProjects, getMateriales, PROJECT_GROUP, PURCHASE_GROUP, ESTIMATE_GROUP_MANAGER, ESTIMATE_GROUP, get_received_quantity
 from hehe.constant import MAX_PROJECT_MATERIAL_QANTITY
 
 from models import Company, Project, ProjectMaterial, SelectedLineItem
@@ -21,7 +21,7 @@ from order.models import Order, OrderLine,ReceivingLine, CheckAccount, Invoice, 
 from payment.models import PaymentProperty, PaymentType, Payment,DoPayemnt
 from workflow.models import Item, Route, Actor, ActorUser
 from setting.models import ProjectSetting, VendorSetting
-from report.adminx import ProjectReceivingListView, ProjectReceivingExportExcelView, VendorAccountListView, VendorAccountExportExcelView, ProjectUsedListView, ProjectUsedExportExcelView, PaymentSummaryView, PaymentSummaryExportExcelView
+from report.adminx import ProjectReceivingCheckedExportAllView, ProjectReceivingCheckedListView, ProjectReceivingListView, ProjectReceivingExportExcelView, VendorAccountListView, VendorAccountExportExcelView, ProjectUsedListView, ProjectUsedExportExcelView, PaymentSummaryView, PaymentSummaryExportExcelView
 
 from django.template.response import TemplateResponse
 from django.http import HttpResponse, HttpResponseRedirect
@@ -95,6 +95,7 @@ class GlobalSetting(object):
             )}, 
              {'title': '报表', 'icon': 'fa fa-file-text-o', 'menus':(
                 {'title': '到货单', 'icon': 'fa fa-truck', 'url': '/report/project/receiving/list', 'perm': self.get_model_perm(Order, 'view')},
+                {'title': '已对账到货单', 'icon': 'fa fa-truck', 'url': '/report/project/receiving/checked/list', 'perm': self.get_model_perm(Order, 'view')},
                 {'title': '对帐单', 'icon': 'fa fa-align-justify', 'url': self.get_model_url(CheckAccount, 'changelist'), 'perm': self.get_model_perm(CheckAccount, 'view')},
                 {'title': '对账单名细', 'icon': 'fa fa-align-justify', 'url': self.get_model_url(CheckAccountDetail, 'changelist'), 'perm': self.get_model_perm(CheckAccountDetail, 'view')},
                 {'title': '工程用量', 'icon': 'fa fa-indent', 'url': '/report/project/used/list', 'perm': self.get_model_perm(Order, 'view'),},
@@ -212,6 +213,8 @@ class ProjectMaterialAdmin(object):
             project_id = self.params['_rel_project__id__exact']
             batch_add_url = '/material/material/?project_id=%s' %project_id
             nodes.append(mark_safe('<a href="%s" class="btn btn-primary">%s</a>' % (batch_add_url, '批量增加材料')))
+            upload_url = '/project/material/upload?project_id=%s' %project_id
+            nodes.append(mark_safe('&nbsp;<a href="%s" class="btn btn-primary">%s</a>' % (upload_url, '导入项目材料')))
             
         
         
@@ -339,7 +342,6 @@ class SelectedLineItemAdmin(object):
         return super(SelectedLineItemAdmin, self).save_models()
 
     
-from data_importer.views import DataImporterForm
 from data_importer.importers import XLSXImporter
 class ProjectMaterialImporterModel(XLSXImporter):
     fields = ['seq', 'category', 'name', 'specification', 'unit', 'quantity', 'price', 'total']
@@ -347,11 +349,39 @@ class ProjectMaterialImporterModel(XLSXImporter):
 #         model = Material
         ignore_first_line = True
 
-class DataImporterCreateView(DataImporterForm):
-        extra_context = {'title': 'Create Form Data Importer',
-                         'template_file': 'myfile.csv',
-                         'success_message': "File uploaded successfully"}
-        importer = ProjectMaterialImporterModel
+class ProjectMaterialUploadView(CommAdminView):
+    need_site_permission = True
+    list_template = 'views/project_material_upload.html'
+
+    def get(self, request, *args, **kwargs):
+        context = super(ProjectMaterialUploadView, self).get_context()
+        
+        if "project_id" in request.REQUEST:
+            project_id = request.REQUEST["project_id"]
+            context.update({
+            "project_id": project_id
+            
+            })
+        
+        return TemplateResponse(request, self.list_template, context,
+                                current_app=self.admin_site.name)
+    
+    def post(self, request, *args, **kwargs):
+        if "project_id" in request.REQUEST:
+            project_id = request.REQUEST["project_id"]
+            project = Project.objects.get(id = project_id)
+            file = request.FILES.get('file')
+            if file:
+                xlsx_list = ProjectMaterialImporterModel(source=file)
+                for index, row in xlsx_list.cleaned_data:
+                    uploadProjectMaterial(project, row)
+                
+     
+        self.message_user(u"项目材料导入成功", 'info') 
+        
+        url = "/project/projectmaterial/?_rel_project__id__exact=%s" % (project_id)     
+        return HttpResponseRedirect(url)
+
         
                 
 xadmin.site.register(Company, CompanyAdmin)  
@@ -359,6 +389,8 @@ xadmin.site.register(Project, ProjectAdmin)
 xadmin.site.register(ProjectMaterial, ProjectMaterialAdmin)
 xadmin.site.register(SelectedLineItem, SelectedLineItemAdmin)
 
+xadmin.site.register_view(r"^report/project/receiving/checked/export_all$", ProjectReceivingCheckedExportAllView, name='report/project/receiving/checked/export_all')        
+xadmin.site.register_view(r"^report/project/receiving/checked/list$", ProjectReceivingCheckedListView, name='report/project/receiving/checked/list')        
 xadmin.site.register_view(r"^report/project/receiving/list$", ProjectReceivingListView, name='report/project/receiving/list')        
 xadmin.site.register_view(r"^report/project/receiving/export$", ProjectReceivingExportExcelView, name='report/project/receiving/export')        
 xadmin.site.register_view(r"^report/vendor/account/list$", VendorAccountListView, name='report/vendor/account/list')        
@@ -368,6 +400,6 @@ xadmin.site.register_view(r"^report/project/used/export$", ProjectUsedExportExce
 xadmin.site.register_view(r"^report/payment/summary/$", PaymentSummaryView, name='report/payment/summary')        
 xadmin.site.register_view(r"^report/payment/summary/export$", PaymentSummaryExportExcelView, name='report/payment/summary/export')        
 xadmin.site.register_view(r"^material/price/$", MaterialPriceView, name='material/price')        
-xadmin.site.register_view(r"^project/material/import/$", DataImporterCreateView, name='project/material/import')        
+xadmin.site.register_view(r"^project/material/upload/$", ProjectMaterialUploadView, name='project/material/upload')        
 # xadmin.site.register_view(r"^$", IndexView, name='index')        
 

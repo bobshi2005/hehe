@@ -48,8 +48,8 @@ class Project(models.Model):
     settlement_status = models.BooleanField(u'结算状态', default=False)
     settlement_file = models.FileField(u'结算附件', upload_to='.', help_text='结算附件', blank=True)
     
-    one_month_amount = models.DecimalField(u'1月费用',max_digits = 15, decimal_places=2, blank=True, null=True)
-    two_month_amount = models.DecimalField(u'2月费用',max_digits = 15, decimal_places=2, blank=True, null=True)
+#     one_month_amount = models.DecimalField(u'1月费用',max_digits = 15, decimal_places=2, blank=True, null=True)
+#     two_month_amount = models.DecimalField(u'2月费用',max_digits = 15, decimal_places=2, blank=True, null=True)
     
 
     def __unicode__(self):

@@ -8,6 +8,7 @@ from xadmin.views.base import CommAdminView , ModelAdminView
 from receiving_list import get_project_receiving_list, generate_project_receiving_list
 from vendor_account import get_account_details, generate_account_details, exportCheckAccountExcel
 from payment_summary import get_payment_summary, generate_payment_summary
+from receiving_checked_list import get_checked_project, export_checked_project_impl, export_all
 from project_used import get_project_used_list, generate_project_used_list
 from project.models import Project, Company
 from material.models import Vendor
@@ -15,6 +16,73 @@ from order.models import Order, OrderLine, ReceivingLine, CheckAccount
 from hehe.util import checkAccount, getYears, getMonths, getProjects, getCompany
 from django.utils.translation import ugettext_lazy as _
 
+class ProjectReceivingCheckedExportAllView(CommAdminView):
+    
+    def post(self, request, *args, **kwargs):
+        year = int(request.POST['year'])
+        return export_all(self, year)
+        
+            
+        
+    
+class ProjectReceivingCheckedListView(CommAdminView):
+    need_site_permission = True
+    receiving_checked_list_template = 'views/receiving_checked_list.html'
+    
+    def get_media(self):
+        media = super(ProjectReceivingCheckedListView, self).get_media()
+        media = media + self.vendor('xadmin.widget.select.js', 'datepicker.js', 'datepicker.css', 'xadmin.widget.datetime.js', 'select.js', 'select.css', 'xadmin.plugin.actions.js', 'xadmin.plugins.css')
+        return media
+    
+    def get(self, request, *args, **kwargs):
+        context = super(ProjectReceivingCheckedListView, self).get_context()
+        years = getYears()
+        months = getMonths()
+        context['years'] = years['years']
+        context['months'] = months['months']
+        context['year'] = years['year']
+        context['month'] = months['month']
+        return TemplateResponse(request, self.receiving_checked_list_template, context,
+                                current_app=self.admin_site.name)
+    
+    def post(self, request, *args, **kwargs):
+        if 'action' in request.POST:
+            return self.export_checked_project(request)
+        else:
+            return self.search(request)
+        
+        
+    def export_checked_project(self, request):
+        selected = request.POST.getlist('_selected_action')
+        if not selected:
+            # Reminder that something needs to be selected or nothing will happen
+            msg = _("Items must be selected in order to perform "
+                            "actions on them. No items have been changed.")
+            self.message_user(msg)
+        else:
+            return export_checked_project_impl(selected, request)
+    
+    def search(self, request):
+        if 'year' in request.POST:
+            year = request.POST['year']
+        
+        if 'month' in request.POST:
+            month = request.POST['month']
+        
+        response = self.get(request)
+        context = response.context_data
+        projects = get_checked_project(int(year), int(month))  
+        context['projects'] = projects
+        context['year'] = int(year)
+        context['month'] = int(month)
+        if (len(projects) == 0):
+            self.message_user(str(year) +"年"+ str(month)+"月" + "没有已对账的到货单")
+        return response 
+            
+        
+        
+        
+    
 class ProjectReceivingListView(CommAdminView):
     need_site_permission = True
     receiving_list_template = 'views/receiving_list.html'
@@ -87,7 +155,9 @@ class ProjectReceivingExportExcelView(CommAdminView):
         project = context['project_name']
         vendor = context['vendor']
         result = get_project_receiving_list(start_date, end_date, project, vendor)  
-        book = generate_project_receiving_list(result)   
+        book = xlwt.Workbook(encoding='utf-8')
+        sheet = book.add_sheet("receiving_detail")
+        book = generate_project_receiving_list(result, book, sheet)   
         book.save(output)
         output.seek(0)
         return output.getvalue()       

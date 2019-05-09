@@ -1,0 +1,54 @@
+{% extends 'xadmin/base_site.html' %}
+
+{% block breadcrumbs %}
+<ul class="breadcrumb">
+  <li><a href="/">首页</a></li>
+  <li><a href="/project/project/">项目</a></li>
+  <li>增加 项目材料</li>
+</ul>
+{% endblock %}
+
+{% block content-nav %}
+ 
+ {% endblock %}
+      
+
+{% block content %}
+<div id="content-block" class="col-sm-11 col-md-10">
+    <form class="exform rended" enctype="multipart/form-data" action="" method="post" id="upload_form">
+    {% csrf_token %}
+    <input type="hidden" name="project_id" value='{{project_id}}'>
+            
+        <div class="form-container row clearfix">
+            <div id="column-0" class="formColumn column form-column full col col-sm-12 form-horizontal ui-sortable" horizontal="True" span="12">
+                <div class="panel panel-default fieldset unsort no_title" id="box-0">
+                    <div class="panel-heading"><i class="icon fa fa-chevron-up chevron"></i>
+                        <h3 class="panel-title"></h3>
+                    </div>
+                    <div class="panel-body ">
+                        <div id="div_id_name" class="form-group">
+                                
+                                <div class="controls "><input class="adminfilewidget" id="id_file" name="file" type="file"> <p id="hint_id_file" class="help-block">上传文件</p></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="form-actions well well-sm clearfix">
+            <div class="nav-collapse collapse more-btns">
+                <input type="button" class="btn btn-primary" onclick="location.href='/files/projectMaterial.xlsx'" value="模板下载" name="_addanother">
+            </div>
+            <button type="submit" class="default btn btn-primary hide-xs" name="_save" data-loading-text="上传中.."><i class="fa fa-save"></i> 上传</button>
+            
+        </div>
+    </form>
+</div>
+ 
+{% endblock content %}
+
+
+
+{% block extrabody %}
+
+{% endblock extrabody %}
+
