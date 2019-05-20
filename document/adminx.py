@@ -12,7 +12,7 @@ from models import Document, DocumentLineItem
 from document.models import Document, DocumentLineItem, PROJECT_TYPE
 from workflow.models import Route, Item, ITEM_START, ITEM_APPROVED, ITEM_REJECTED
 from workflow.workflow import Workflow
-from hehe.util import document_apply_submit_check, get_audit_comments_by_document_id, has_audit_comment_by_document_id, doAudit, handle_audit, handle_audit, getItem, canSubmitToApproveForDocument, isGroup,PROJECT_GROUP, PURCHASE_GROUP, canEditAuditQty, canDeleteOrAddDocumentLine, is_closed, isClosedByDocument, getProjects, getPurchasedQuantity, isPurchCompleted
+from hehe.util import doReturn, document_apply_submit_check, get_audit_comments_by_document_id, has_audit_comment_by_document_id, doAudit, handle_audit, handle_audit, getItem, canSubmitToApproveForDocument, isGroup,PROJECT_GROUP, PURCHASE_GROUP, canEditAuditQty, canDeleteOrAddDocumentLine, is_closed, isClosedByDocument, getProjects, getPurchasedQuantity, isPurchCompleted
 from hehe.actions import PROJECT_MATERIAL_APPLY, PurchaseOrderSelectedAction
 from django.utils.datastructures import SortedDict
 from order.models import OrderLine
@@ -25,7 +25,8 @@ from xplugin.views.list import MyListAdminView
 from document.models import PAYMENT_TYPE
 from payment.models import Payment
 from material.models import Category
-from hehe.constant import APPROVAL_FORM_HTML
+from hehe.constant import *
+from django.http import  HttpResponseRedirect
 import document
 
 class DocumentAdmin(object):
@@ -127,6 +128,8 @@ class DocumentLineItemAdmin(object):
         
         if 'action' in request.POST and 'approval' == request.POST['action']:
             return doAudit(self, request)
+        elif 'action' in request.POST and 'return' == request.POST['action']:
+            return doReturn(self, request)
         else:
             return super(DocumentLineItemAdmin, self).post(request, *args, **kwargs)
         
@@ -137,7 +140,10 @@ class DocumentLineItemAdmin(object):
             csrf_token = self.request.COOKIES['csrftoken']
             document_id = self.request.GET['_rel_document__id__exact']
             return APPROVAL_FORM_HTML.format(csrf_token, document_id)
-            
+        elif 'action=return' in path and 'csrftoken' in self.request.COOKIES and '_rel_document__id__exact' in self.request.GET:
+            csrf_token = self.request.COOKIES['csrftoken']
+            document_id = self.request.GET['_rel_document__id__exact']
+            return RETURN_FORM_HTML.format(csrf_token, document_id)    
             
             
     def getTotalPurchasedQuantity(self, instance):
@@ -175,7 +181,11 @@ class DocumentLineItemAdmin(object):
                 #采购部门可以修改实际采购名称
                 if (item.status == ITEM_APPROVED):
                     if isGroup(self, PURCHASE_GROUP) and (document and not isPurchCompleted(document)):
-                        return ['material']
+                        path = self.request.get_full_path()
+                        if 'action=return' in path:
+                            return []
+                        else:
+                            return ['material']
                     else:
                         return []
                 if (item.status == ITEM_REJECTED) and isGroup(self, PROJECT_GROUP):
@@ -289,6 +299,9 @@ class DocumentLineItemAdmin(object):
             else:
                 if isGroup(self, PROJECT_GROUP):
                     actions.append(BatchChangeAction)
+        path = self.request.get_full_path()
+        if 'action=return' in path:
+            actions = []
         return actions
     
     
@@ -433,7 +446,16 @@ class RequestOrder(MyListAdminView):
 #     isClosed.short_description = u"已闭合"
 #     isClosed.allow_tags = True
 #     isClosed.is_column = True
-     
+    
+    def doAction(self, instance):
+        if instance.purch_status == '未采购':
+            return "<a href='/document/documentlineitem/?_rel_document__id__exact=%s&action=return'>退回</a>" % instance.id
+        else:
+            return ''
+    doAction.short_description = u"操作"
+    doAction.allow_tags = True
+    doAction.is_column = True
+
     def getDocumentLines(self, instance):
         #项目申请URL
         url = "<a href='/document/documentlineitem/?_rel_document__id__exact=%s'>%s</a>" % (instance.id, instance.document_id)
@@ -445,7 +467,7 @@ class RequestOrder(MyListAdminView):
      
     model = Document
     list_display_links = ('none',)
-    list_display = ('project', 'getDocumentLines', 'user', 'getAuditList', 'getAuditComments', 'purch_status')
+    list_display = ('project', 'getDocumentLines', 'user', 'getAuditList', 'getAuditComments', 'purch_status', 'doAction')
     list_filter = ['project__name', 'purch_status']
     list_editable = ['purch_status',]
     search_fields = ['document_id']

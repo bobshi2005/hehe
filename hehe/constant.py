@@ -108,6 +108,50 @@ APPROVAL_NO_FORM_HTML = """
 </div>                               
 """
 
+#采购退回操作
+RETURN_FORM_HTML = """
+
+<div class="panel panel-default formset fieldset  stacked" id="specification_set-group">
+    <div class="panel-heading">   
+      <h3 class="panel-title">退回</h3>
+    </div>
+                
+    <form class="exform rended" enctype="multipart/form-data" method="post" id="item_form">
+    <input type='hidden' name='csrfmiddlewaretoken' value={0} />
+    <input type='hidden' name='document_id' value={1} />
+    <input type="hidden" name="action" value="return">
+
+    <div class="form-container row clearfix">
+    <div id="column-0" class="formColumn column form-column full col col-sm-12 form-horizontal ui-sortable" horizontal="True" span="12">
+    <div class="panel panel-default fieldset unsort no_title" id="box-0">
+    <div class="panel-heading"><i class="icon fa fa-chevron-up chevron"></i><h3 class="panel-title"></h3>
+    </div>
+    <div class="panel-body ">
+  
+    <div id="div_id_comments" class="form-group">
+    <label for="id_comments" class="control-label ">退回意见
+    </label>
+    <div class="controls ">
+    <textarea class="textarea form-control" cols="40" id="id_comments" name="comments" rows="10"></textarea>
+    </div>
+    </div>
+    </div>
+    </div>
+    </div>
+    </div>
+
+
+    <div class="form-actions well well-sm clearfix fixed">
+    <div class="nav-collapse collapse more-btns">
+    <input type="submit" class="btn btn-primary" value="确定" name="_continue">
+    </div>
+    </div>
+    </form>            
+                
+                
+                
+</div>                               
+"""
 
 def format_decimal_number(decimal_number):
     if decimal_number == '' or decimal_number is None:

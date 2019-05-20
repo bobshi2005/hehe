@@ -1,6 +1,6 @@
 # coding=utf-8
 import time
-from models import Route, Actor, ActorUser, Item, TaskList,TaskHistory,ITEM_REJECTED, ITEM_START,ITEM_APPROVING, APPROVED,REJECTED,REAPPLY, ITEM_APPROVED, ITEM_STATUS
+from models import RETURNED, Route, Actor, ActorUser, Item, TaskList,TaskHistory,ITEM_REJECTED, ITEM_START,ITEM_APPROVING, APPROVED,REJECTED,REAPPLY, ITEM_APPROVED, ITEM_STATUS
 from payment.models import Payment
 from django.conf import settings
 from hehe.weixin import send_message
@@ -112,7 +112,28 @@ class Workflow():
             send_messag_that_reject(currentActor, item)
             
         
+    #采购退回
+    def returnWorkflow(self, item, user, comments):
+        #update任务列表的步骤ID为第一步的ID
+        #find current task
+        currentTask = TaskList.objects.filter(item = item)[0]
+        currentActor = currentTask.actor
+        firstActor = Actor.objects.filter(route = currentTask.actor.route).order_by('sort_order')[0]
         
+        #update to first actor
+        currentTask.actor = firstActor
+        currentTask.save(update_fields=['actor'])
+        
+        #插入任务历史记录
+        TaskHistory.objects.create(item=item, 
+                                   status=RETURNED, 
+                                   user=user, comments=comments)
+        #修改项目Item的状态为审批中
+        item.status = ITEM_REJECTED
+        item.save(update_fields=['status'])
+        
+        if settings.ENABLE_WEIXIN_MESSAGE:
+            send_messag_that_reject(currentActor, item)      
         
     #重新发起申请
     def reApplyWorkflow(self, item, user, comments):

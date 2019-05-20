@@ -325,3 +325,5 @@ ALTER TABLE  order_orderline MODIFY COLUMN purchase_quantity decimal(15,2) ;
 
 ALTER TABLE `project_project`  ADD COLUMN `settlement_status` tinyint(1) NOT NULL;
 ALTER TABLE `project_project`  ADD COLUMN `settlement_file` varchar(100);
+
+ALTER TABLE `payment_payment`  ADD COLUMN `create_user_id` int(11);

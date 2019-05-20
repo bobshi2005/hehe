@@ -21,6 +21,7 @@ ITEM_STATUS = (
 REAPPLY = 0;
 APPROVED = 1;
 REJECTED = 2;
+RETURNED = 3;
 
 AUDIT_STATUS = (
     (APPROVED, u"审批通过"),
@@ -30,7 +31,8 @@ AUDIT_STATUS = (
 AUDIT_HISTORY_STATUS = (
     (REAPPLY, u"重新发起审批"),
     (APPROVED, u"审批通过"),
-    (REJECTED, u"审批不通过"),           
+    (REJECTED, u"审批不通过"),
+    (RETURNED, u"退回"),            
 )
 
 PAYMENT_ROUTE = u'付款申请'

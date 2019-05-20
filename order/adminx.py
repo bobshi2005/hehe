@@ -254,7 +254,13 @@ class ReceivingLineAdmin(object):
         return queryset
         
     def delete_models(self, queryset):
+        original_len = len(queryset)
         queryset = self.filter_queryset(queryset)
+        current_len = len(queryset)
+        if original_len <> current_len and original_len > 0:
+            self.message_user(u"已闭合，已对账的到货单不能删除", 'info')
+        
+        
         if len(queryset) > 0:
             for line in queryset:
                 line.orderLine.documentLineItem.posted_quantity -= (line.receiving_quantity or 0)

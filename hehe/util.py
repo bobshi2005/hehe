@@ -367,6 +367,18 @@ def doAudit(self, request):
         document_id = request.POST['document_id']
         item = getItem(document_id)
         return handle_audit(self, item, audit, comments)
+
+#采购退回    
+def doReturn(self, request):
+        comments = request.POST['comments']
+        document_id = request.POST['document_id']
+        item = getItem(document_id)
+        
+        workflow = Workflow()
+        workflow.returnWorkflow(item, self.user, comments)
+        
+        return HttpResponseRedirect("/document/request/order/")
+
     
 def assign_material_to_project(self, project_id, material):
     project = Project.objects.get(id = project_id)
