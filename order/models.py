@@ -22,7 +22,7 @@ class OrderNote(models.Model):
     
 class Order(models.Model):
     class Meta:
-        ordering = ['-create_time']
+        ordering = ['-order_id']
         verbose_name = u'采购单'
         verbose_name_plural = verbose_name
         
@@ -66,7 +66,7 @@ class OrderLine(models.Model):
         self.update_document_purch_status()
     
     def update_document_purch_status(self):
-        #if self.documentLineItem.document.purch_status != '采购完成':
+        if self.documentLineItem.document.purch_status != '采购完成':
             status = self.getPurchasedStatus(self.documentLineItem.document)
             self.documentLineItem.document.purch_status = status
             self.documentLineItem.document.save(update_fields=['purch_status'])

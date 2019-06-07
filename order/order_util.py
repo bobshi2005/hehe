@@ -10,6 +10,7 @@ def getPurchasedQuantity(documentLineItem):
 
 
 def update_document_purch_status(document):
+    if document.purch_status != '采购完成':
         status = getPurchasedStatus(document)
         document.purch_status = status
         document.save(update_fields=['purch_status'])
