@@ -10,13 +10,14 @@ def getPurchasedQuantity(documentLineItem):
 
 
 def update_document_purch_status(document):
-    if document.purch_status != '采购完成':
+#     if document.purch_status != '采购完成':
         status = getPurchasedStatus(document)
         document.purch_status = status
         document.save(update_fields=['purch_status'])
     
     
 def getPurchasedStatus(document):
+        print 'order_util:要料单：' + str(document.document_id) +  '  状态：' + document.purch_status
         documentLines = DocumentLineItem.objects.filter(document = document)
         status = '未采购'
         count = 0
@@ -61,4 +62,5 @@ def getPurchasedStatus(document):
         
         if non_purchased_count == len(documentLines):
             status = '未采购'
+        print 'order_util:要料单：' + str(document.document_id) +  '  状态：' + status
         return status

@@ -73,6 +73,7 @@ class OrderLine(models.Model):
     
     
     def getPurchasedStatus(self, document):
+        print 'model:要料单：' + str(document.document_id) +  '  状态：' + document.purch_status
         documentLines = DocumentLineItem.objects.filter(document = document)
         status = '未采购'
         count = 0
@@ -117,6 +118,8 @@ class OrderLine(models.Model):
             
         if non_purchased_count == len(documentLines):
             status = '未采购'
+            
+        print 'model:要料单：' + str(document.document_id) +  '  状态：' + status
         return status
     
     def getPurchasedQuantity(self, documentLineItem):

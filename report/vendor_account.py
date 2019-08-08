@@ -139,7 +139,7 @@ def get_receiving_lines(start_date, end_date, vendors, company):
     #查找6个月之前没有对帐的
     args = Q()
     if start_date:
-        before_six_month = datetime.datetime.strptime(start_date, '%Y-%m-%d').date() - MonthDelta(6)
+        before_six_month = datetime.datetime.strptime(start_date, '%Y-%m-%d').date() - MonthDelta(12)
         
         #包括所有的子供应商
         args = build_receiving_parameters(before_six_month, start_date, vendors, company)
@@ -278,7 +278,7 @@ def get_sum_by_project_and_company(start_date, end_date, vendors, company):
         
      
     if start_date:
-        before_six_month = datetime.datetime.strptime(start_date, '%Y-%m-%d').date() - MonthDelta(6)
+        before_six_month = datetime.datetime.strptime(start_date, '%Y-%m-%d').date() - MonthDelta(12)
         query = query + "AND receiving.receiving_date >= '%s'" %before_six_month
          
     if end_date:
